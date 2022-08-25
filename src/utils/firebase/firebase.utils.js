@@ -9,7 +9,7 @@ import {
   signOut,
   onAuthStateChanged,
 } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, collection, writeBatch, query, getDocs } from 'firebase/firestore';
 
 const firebaseConfig = {
     apiKey: "AIzaSyAGB1Ii3N_mfNmKxdXsXjvBZ4XZOqBFTTQ",
@@ -35,6 +35,39 @@ export const signInWithGoogleRedirect = () =>
   signInWithRedirect(auth, googleProvider);
 
 export const db = getFirestore();
+
+//write a function to let shop-data be written into firebase
+export const addCollectionAndDocuments = async (collectionKey, objectsToAdd) => {
+  const collectionRef = collection(db, collectionKey);
+  const batch = writeBatch(db);
+
+  objectsToAdd.forEach((object)=>{
+    const docRef = doc(collectionRef, object.title.toLowerCase());
+    //a method to ensure each transction will be correct
+    batch.set(docRef, object);
+  })
+
+  await batch.commit();
+  console.log('done');
+};
+
+//fetch the data from the backend database; remember to write an interface to seperate the react hooks with our own methods
+export const getCategoriesAndDocuments = async() => {
+  const collectionRef = collection(db, 'categories');
+  const q = query(collectionRef);
+
+  const querySnapshot = await getDocs(q);
+  const categoryMap = querySnapshot.docs.reduce((acc, docSnapshot)=>{
+    const {title, items} = docSnapshot.data();
+    //write the key-value pairs to finally become a categories array
+    acc[title.toLowerCase()] = items;
+    return acc;
+  }, {}) 
+
+  return categoryMap;
+};
+
+
 
 export const createUserDocumentFromAuth = async (
   userAuth,
