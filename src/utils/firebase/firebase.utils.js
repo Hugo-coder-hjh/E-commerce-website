@@ -9,16 +9,25 @@ import {
   signOut,
   onAuthStateChanged,
 } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, collection, writeBatch, query, getDocs } from 'firebase/firestore';
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  collection,
+  writeBatch,
+  query,
+  getDocs,
+} from 'firebase/firestore';
 
 const firebaseConfig = {
-    apiKey: "AIzaSyAGB1Ii3N_mfNmKxdXsXjvBZ4XZOqBFTTQ",
-    authDomain: "crwn-clothing-db-7deef.firebaseapp.com",
-    projectId: "crwn-clothing-db-7deef",
-    storageBucket: "crwn-clothing-db-7deef.appspot.com",
-    messagingSenderId: "533618120708",
-    appId: "1:533618120708:web:33c054e3b73ceba1b13d51"
-  };
+  apiKey: 'AIzaSyDDU4V-_QV3M8GyhC9SVieRTDM4dbiT0Yk',
+  authDomain: 'crwn-clothing-db-98d4d.firebaseapp.com',
+  projectId: 'crwn-clothing-db-98d4d',
+  storageBucket: 'crwn-clothing-db-98d4d.appspot.com',
+  messagingSenderId: '626766232035',
+  appId: '1:626766232035:web:506621582dab103a4d08d6',
+};
 
 const firebaseApp = initializeApp(firebaseConfig);
 
@@ -36,38 +45,30 @@ export const signInWithGoogleRedirect = () =>
 
 export const db = getFirestore();
 
-//write a function to let shop-data be written into firebase
-export const addCollectionAndDocuments = async (collectionKey, objectsToAdd) => {
+export const addCollectionAndDocuments = async (
+  collectionKey,
+  objectsToAdd,
+  field
+) => {
   const collectionRef = collection(db, collectionKey);
   const batch = writeBatch(db);
 
-  objectsToAdd.forEach((object)=>{
+  objectsToAdd.forEach((object) => {
     const docRef = doc(collectionRef, object.title.toLowerCase());
-    //a method to ensure each transction will be correct
     batch.set(docRef, object);
-  })
+  });
 
   await batch.commit();
   console.log('done');
 };
 
-//fetch the data from the backend database; remember to write an interface to seperate the react hooks with our own methods
-export const getCategoriesAndDocuments = async() => {
+export const getCategoriesAndDocuments = async () => {
   const collectionRef = collection(db, 'categories');
   const q = query(collectionRef);
 
   const querySnapshot = await getDocs(q);
-  const categoryMap = querySnapshot.docs.reduce((acc, docSnapshot)=>{
-    const {title, items} = docSnapshot.data();
-    //write the key-value pairs to finally become a categories array
-    acc[title.toLowerCase()] = items;
-    return acc;
-  }, {}) 
-
-  return categoryMap;
+  return querySnapshot.docs.map((docSnapshot) => docSnapshot.data());
 };
-
-
 
 export const createUserDocumentFromAuth = async (
   userAuth,
@@ -79,7 +80,6 @@ export const createUserDocumentFromAuth = async (
 
   const userSnapshot = await getDoc(userDocRef);
 
-  //userSnapshot can be used to check whether the user is new or exists;
   if (!userSnapshot.exists()) {
     const { displayName, email } = userAuth;
     const createdAt = new Date();
@@ -96,10 +96,8 @@ export const createUserDocumentFromAuth = async (
     }
   }
 
-  return userDocRef;
+  return userSnapshot;
 };
-
-
 
 export const createAuthUserWithEmailAndPassword = async (email, password) => {
   if (!email || !password) return;
@@ -117,3 +115,16 @@ export const signOutUser = async () => await signOut(auth);
 
 export const onAuthStateChangedListener = (callback) =>
   onAuthStateChanged(auth, callback);
+
+export const getCurrentUser = () => {
+  return new Promise((resolve, reject) => {
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      (userAuth) => {
+        unsubscribe();
+        resolve(userAuth);
+      },
+      reject
+    );
+  });
+};

@@ -1,12 +1,13 @@
-import { useContext, Fragment} from "react";
+import {Fragment} from "react";
+import  {useSelector} from 'react-redux';
 // when exporting const, you need to import {}
-import { CategoriesContext } from "../../components/contexts/categories.context";
+import { selectCategoriesMap } from '../../store/categories/category.selector';
 // when exporting default, you don't need to import {}
 import CategoryPreview from "../../components/category-preview/category-preview.component";
 
 
 const CategoriesPreview = () => {
-    const {categoriesMap} = useContext(CategoriesContext);
+  const categoriesMap = useSelector(selectCategoriesMap);
 
    return(
     <Fragment>
